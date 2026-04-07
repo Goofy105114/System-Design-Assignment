@@ -1,0 +1,36 @@
+from collections import defaultdict
+
+class Shard:
+    def __init__(self, shard_id):
+        self.shard_id = shard_id
+        self.messages = defaultdict(list)
+        self.total = 0
+
+    def store(self, message):
+        self.messages[message.channel_id].append(message)
+        self.total += 1
+
+class ShardManager:
+    def __init__(self, num_shards):
+        self.num_shards = num_shards
+        self.shards = [Shard(i) for i in range(num_shards)]
+
+    def get_shard(self, key):
+        return self.shards[key % self.num_shards]
+
+    def route_by_user(self, message):
+        shard = self.get_shard(message.sender_id)
+        shard.store(message)
+
+    def route_by_channel(self, message):
+        shard = self.get_shard(message.channel_id)
+        shard.store(message)
+
+    def stats(self, label=""):
+        total = sum(s.total for s in self.shards)
+        print(f"\n=== ShardManager Stats [{label}] ===")
+        print(f"Total messages: {total}")
+        for shard in self.shards:
+            pct = (shard.total / total * 100) if total else 0
+            bar = "█" * int(pct // 2)
+            print(f"  shard {shard.shard_id}: {shard.total:>6} msgs ({pct:5.1f}%) {bar}")

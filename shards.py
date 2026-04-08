@@ -1,4 +1,5 @@
 from collections import defaultdict
+import hashlib
 
 class Shard:
     def __init__(self, shard_id):
@@ -34,3 +35,14 @@ class ShardManager:
             pct = (shard.total / total * 100) if total else 0
             bar = "█" * int(pct // 2)
             print(f"  shard {shard.shard_id}: {shard.total:>6} msgs ({pct:5.1f}%) {bar}")
+
+class HashShardManager(ShardManager):
+    def get_shard_by_hash(self, key):
+        # Use md5 to ensure consistent hashing
+        hash_val = int(hashlib.md5(key.encode('utf-8')).hexdigest(), 16)
+        return self.shards[hash_val % self.num_shards]
+
+    def route_by_hash(self, message):
+        key = f"{message.sender_id}-{message.channel_id}"
+        shard = self.get_shard_by_hash(key)
+        shard.store(message)

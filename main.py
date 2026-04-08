@@ -1,7 +1,7 @@
 import random
 from message import Message
 from server import ChatServer
-from shards import ShardManager
+from shards import ShardManager, HashShardManager
 
 NUM_USERS    = 50000
 NUM_CHANNELS = 10
@@ -33,6 +33,15 @@ def simulate_channel_sharding():
         mgr.route_by_channel(Message(user_id, channel_id, "hello"))
     mgr.stats("channel-based sharding | viral channel=1")
 
+def simulate_hash_sharding():
+    mgr = HashShardManager(NUM_SHARDS)
+    heavy_user = 1
+    for _ in range(NUM_MESSAGES):
+        user_id    = heavy_user if random.random() < 0.2 else random.randint(2, NUM_USERS)
+        channel_id = 1 if random.random() < 0.8 else random.randint(2, NUM_CHANNELS)
+        mgr.route_by_hash(Message(user_id, channel_id, "hello"))
+    mgr.stats("hash-based sharding | composite key")
+
 if __name__ == "__main__":
     print("\n" + "="*50)
     print("PHASE 1 — Naive Single Server (hotspot visible)")
@@ -48,3 +57,8 @@ if __name__ == "__main__":
     print("PHASE 3 — Channel-Based Sharding (viral channel problem)")
     print("="*50)
     simulate_channel_sharding()
+
+    print("\n" + "="*50)
+    print("PHASE 4 — Hash-Based Sharding")
+    print("="*50)
+    simulate_hash_sharding()

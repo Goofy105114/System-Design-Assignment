@@ -42,6 +42,23 @@ def simulate_hash_sharding():
         mgr.route_by_hash(Message(user_id, channel_id, "hello"))
     mgr.stats("hash-based sharding | composite key")
 
+def stress_test(manager, label, num_users, num_channels, num_messages, viral=False, heavy_user=False):
+    heavy_u_id = 1
+    viral_c_id = 1
+    for _ in range(num_messages):
+        user_id = heavy_u_id if heavy_user and random.random() < 0.8 else random.randint(2, max(2, num_users))
+        channel_id = viral_c_id if viral and random.random() < 0.8 else random.randint(2, max(2, num_channels))
+        
+        msg = Message(user_id, channel_id, "hello")
+        if isinstance(manager, HashShardManager):
+            manager.route_by_hash(msg)
+        elif "channel" in label.lower():
+            manager.route_by_channel(msg)
+        else:
+            manager.route_by_user(msg)
+            
+    manager.stats(label)
+
 if __name__ == "__main__":
     print("\n" + "="*50)
     print("PHASE 1 — Naive Single Server (hotspot visible)")
@@ -62,3 +79,20 @@ if __name__ == "__main__":
     print("PHASE 4 — Hash-Based Sharding")
     print("="*50)
     simulate_hash_sharding()
+
+    print("\n" + "="*50)
+    print("PHASE 5 — Stress Testing Scenarios")
+    print("="*50)
+    
+    stress_test(HashShardManager(NUM_SHARDS), "Normal Load", NUM_USERS, NUM_CHANNELS, NUM_MESSAGES)
+    stress_test(HashShardManager(NUM_SHARDS), "Viral Event", NUM_USERS, NUM_CHANNELS, NUM_MESSAGES, viral=True)
+    stress_test(HashShardManager(NUM_SHARDS), "Extreme Spike", NUM_USERS, NUM_CHANNELS, NUM_MESSAGES * 2, viral=True, heavy_user=True)
+
+    print("\n" + "="*50)
+    print("FAILURE TEST — Shard 2 Down")
+    print("="*50)
+    
+    mgr_fail = HashShardManager(NUM_SHARDS)
+    mgr_fail.disable_shard(2)
+    # Using 10000 messages to avoid completely flooding the output with lost message prints
+    stress_test(mgr_fail, "Failure Test - Viral Traffic", NUM_USERS, NUM_CHANNELS, 10000, viral=True)

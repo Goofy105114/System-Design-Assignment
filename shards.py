@@ -6,6 +6,7 @@ class Shard:
         self.shard_id = shard_id
         self.messages = defaultdict(list)
         self.total = 0
+        self.active = True
 
     def store(self, message):
         self.messages[message.channel_id].append(message)
@@ -19,13 +20,23 @@ class ShardManager:
     def get_shard(self, key):
         return self.shards[key % self.num_shards]
 
+    def disable_shard(self, shard_id):
+        if 0 <= shard_id < self.num_shards:
+            self.shards[shard_id].active = False
+
+    def _route(self, shard, message):
+        if not shard.active:
+            print(f"Shard {shard.shard_id} is down, message lost")
+            return
+        shard.store(message)
+
     def route_by_user(self, message):
         shard = self.get_shard(message.sender_id)
-        shard.store(message)
+        self._route(shard, message)
 
     def route_by_channel(self, message):
         shard = self.get_shard(message.channel_id)
-        shard.store(message)
+        self._route(shard, message)
 
     def stats(self, label=""):
         total = sum(s.total for s in self.shards)
@@ -45,4 +56,4 @@ class HashShardManager(ShardManager):
     def route_by_hash(self, message):
         key = f"{message.sender_id}-{message.channel_id}"
         shard = self.get_shard_by_hash(key)
-        shard.store(message)
+        self._route(shard, message)

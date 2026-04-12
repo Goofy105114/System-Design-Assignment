@@ -96,3 +96,18 @@ if __name__ == "__main__":
     mgr_fail.disable_shard(2)
     # Using 10000 messages to avoid completely flooding the output with lost message prints
     stress_test(mgr_fail, "Failure Test - Viral Traffic", NUM_USERS, NUM_CHANNELS, 10000, viral=True)
+
+    print("\n" + "="*50)
+    print("CROSS-SHARD QUERY TEST")
+    print("="*50)
+    
+    mgr_query = HashShardManager(NUM_SHARDS)
+    for i in range(20):
+        # send 20 messages to channel 5 from various users
+        mgr_query.route_by_hash(Message(i + 1, 5, f"Test message {i+1}"))
+        
+    print("Fetching last 5 messages from channel 5 (Cross-Shard Query):")
+    recent_msgs = mgr_query.fetch_channel_messages(5, limit=5)
+    for msg in recent_msgs:
+        print(msg)
+

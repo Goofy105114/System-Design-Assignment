@@ -47,6 +47,18 @@ class ShardManager:
             bar = "█" * int(pct // 2)
             print(f"  shard {shard.shard_id}: {shard.total:>6} msgs ({pct:5.1f}%) {bar}")
 
+    def fetch_channel_messages(self, channel_id, limit=10):
+        all_messages = []
+        # Check all shards (cross-shard query)
+        for shard in self.shards:
+            if shard.active:
+                all_messages.extend(shard.messages.get(channel_id, []))
+        
+        # Sort by timestamp (oldest first, so newest are at the end)
+        all_messages.sort(key=lambda msg: msg.timestamp)
+        return all_messages[-limit:]
+
+
 class HashShardManager(ShardManager):
     def get_shard_by_hash(self, key):
         # Use md5 to ensure consistent hashing

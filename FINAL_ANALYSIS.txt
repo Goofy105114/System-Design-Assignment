@@ -1,0 +1,39 @@
+### Q1. Which shard failed first and why?
+
+* User-based sharding failed when one user sent many messages
+* Channel-based sharding failed fastest due to viral channel traffic
+* One shard received most of the load and became overloaded
+
+---
+
+### Q2. Which strategy looked good but failed under spike?
+
+* Hash-based sharding looked balanced under normal load
+* Under spike (viral + heavy user), imbalance still occurred
+* One shard had higher load (~30%)
+* Hashing reduces imbalance but does not eliminate it
+
+---
+
+### Q3. What happens when shards increase (3 → 10)?
+
+* Distribution becomes slightly more balanced
+* However, hashing causes data to remap
+* Existing data may move to different shards
+* This creates consistency and migration problems
+
+---
+
+### Q4. What happens when one shard goes down?
+
+* Messages going to that shard are lost
+* System becomes inconsistent
+* Some data is missing during queries
+
+---
+
+### Q5. Cross-shard query problem
+
+* To fetch last messages of a channel, all shards must be checked
+* Data must be combined and sorted
+* This increases query cost and reduces efficiency

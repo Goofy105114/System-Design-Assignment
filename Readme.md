@@ -14,6 +14,8 @@ It moves beyond basic setups to explore what happens when systems are pushed to 
 3. **Stress & Spikes:** Simulating extreme traffic spikes to test hash distribution.
 4. **Resiliency Testing:** Witnessing how outages drop data (missing shards/lost messages).
 5. **Cross-Shard Querying:** Fetching recent cross-shard data requires querying every node, merging, and sorting (reduces efficiency to guarantee correctness).
+6. **Hotspot Detection:** Automatically warns when a single shard handles more than 50% of the total load.
+7. **Query Cost Tracking:** Tracks and displays the number of active shards queried during cross-shard operations.
 
 ## Final Analysis
 

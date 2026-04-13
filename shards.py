@@ -46,16 +46,21 @@ class ShardManager:
             pct = (shard.total / total * 100) if total else 0
             bar = "█" * int(pct // 2)
             print(f"  shard {shard.shard_id}: {shard.total:>6} msgs ({pct:5.1f}%) {bar}")
+            if pct > 50:
+                print(f"WARNING: Hotspot detected in shard {shard.shard_id}")
 
     def fetch_channel_messages(self, channel_id, limit=10):
         all_messages = []
+        shards_checked = 0
         # Check all shards (cross-shard query)
         for shard in self.shards:
             if shard.active:
+                shards_checked += 1
                 all_messages.extend(shard.messages.get(channel_id, []))
         
         # Sort by timestamp (oldest first, so newest are at the end)
         all_messages.sort(key=lambda msg: msg.timestamp)
+        print(f"Shards checked: {shards_checked}")
         return all_messages[-limit:]
 
 
